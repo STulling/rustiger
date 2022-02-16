@@ -9,7 +9,7 @@ use portaudio as pa;
 use std::collections::VecDeque;
 
 const SAMPLE_RATE: f64 = 44_100.0;
-const CHANNELS: i32 = 2;
+const CHANNELS: i32 = 1;
 const FRAMES: u32 = 800;
 const INTERLEAVED: bool = true;
 
@@ -39,16 +39,17 @@ fn run() -> Result<(), pa::Error> {
 
     // Construct the input stream parameters.
     let latency = input_info.default_low_input_latency;
-    let input_params = pa::StreamParameters::<f32>::new(def_input, CHANNELS, INTERLEAVED, latency);
+    let input_params = pa::StreamParameters::<i16>::new(def_input, CHANNELS, INTERLEAVED, latency);
 
-    let def_output = pa.default_output_device()?;
+    //let def_output = pa.default_output_device()?;
+    let def_output = pa.api_device_index_to_device_index(default_host, 1)?;
     let output_info = pa.device_info(def_output)?;
     println!("Default output device info: {:#?}", &output_info);
 
     // Construct the output stream parameters.
     let latency = output_info.default_low_output_latency;
     let output_params =
-        pa::StreamParameters::<f32>::new(def_output, CHANNELS, INTERLEAVED, latency);
+        pa::StreamParameters::<i16>::new(def_output, CHANNELS, INTERLEAVED, latency);
 
     // Check that the stream format is supported.
     pa.is_duplex_format_supported(input_params, output_params, SAMPLE_RATE)?;
@@ -59,7 +60,7 @@ fn run() -> Result<(), pa::Error> {
     let mut stream = pa.open_blocking_stream(settings)?;
 
     // We'll use this buffer to transfer samples from the input stream to the output stream.
-    let mut buffer: VecDeque<f32> = VecDeque::with_capacity(FRAMES as usize * CHANNELS as usize);
+    let mut buffer: VecDeque<i16> = VecDeque::with_capacity(FRAMES as usize * CHANNELS as usize);
 
     stream.start()?;
 
